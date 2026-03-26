@@ -1,48 +1,85 @@
 #include <stdio.h>
-#include <Strlib.h>
-#include <Funcoes.h>
+#include <stdlib.h>
+#include <string.h>
+#include "Funcoes.h" 
 
 // Inicializando
 void inicializar(PONT* raiz) {
     *raiz = NULL;
 }
 
-// Criando nó
-PONT criarNo(char nomeSobrenome, char nomeSobrenomeMae; char nomeSobrenomePai, char dataNascimento) {
-    PONT novo = ;
-
+// Criando nó 
+PONT criarNo(char* nomeSobrenome, char* nomeSobrenomeMae, char* NomeSobrenomePai, ANIVERSARIO niver) {
+    PONT novo = (PONT)malloc(sizeof(NO));
+    if (novo) {
+        strcpy(novo->nome, nome);
+        strcpy(novo->nomeMae, mae);
+        strcpy(novo->nomePai, pai);
+        novo->aniversario = niver;
+        novo->contador = 1;
+        novo->irmaoMaisNovo = NULL;
+        novo->irmaoMaisVelho = NULL;
+    }
+    return novo;
 }
 
-PONT inserirPessoa (PONT raiz); {
-    // Definimos um tamanho máximo para o nome 
-    char nomeSobrenome[100];
-    char nomeSobrenomeMae[100];
-    char nomeSobrenomePai[100];
-    char dataNascimento[10];
+// Inserindo pessoa
+PONT inserirPessoa(PONT raiz) {
+    char nome[100], mae[100], pai[100], dataStr[15];
+    ANIVERSARIO niver;
 
-    printf("Digite o nome e sobrenome da pessoa: \n");
+    printf("Digite o nome e sobrenome da pessoa: ");
+    fgets(nome, 100, stdin); nome[strcspn(nome, "\n")] = '\0';
 
-    if (fgets(nomeSobrenome, sizeof(nomeSobrenome), stdin)) {
-        nomeSobrenome[strcspn(nomeSobrenome, "\n")] = '\0'; //strcspn retira o \n apos clicar enter
-    };
+    printf("Digite o nome da Mãe: ");
+    fgets(mae, 100, stdin); mae[strcspn(mae, "\n")] = '\0';
 
-    printf("Digite o nome e sobrenome da Mãe dessa pessoa: \n")
+    printf("Digite o nome do Pai: ");
+    fgets(pai, 100, stdin); pai[strcspn(pai, "\n")] = '\0';
 
-    if (fgets(nomeSobrenomeMae, sizeof(nomeSobrenomeMae), stdin)) {
-        nomeSobrenomeMae[strcspn(nomeSobrenomeMae, "\n")] = '\0'; 
-    };
+    printf("Digite a data (dd/mm/aaaa): ");
+    fgets(dataStr, 15, stdin);
+    
+    if (sscanf(dataStr, "%d/%d/%d", &niver.data, &niver.mes, &niver.ano) != 3) {
+        printf("Erro: Formato de data invalido!\n");
+        return raiz;
+    }
 
-    printf("Digite o nome e sobrenome do pai dessa pessoa: ")
+    PONT novoNo = criarNo(nome, mae, pai, niver);
 
-    (fgets(nomeSobrenomePai, sizeof(nomeSobrenomePai), stdin)) {
-        nomeSobrenomePai[strcspn(nomeSobrenomePai, "\n")] = '\0'; 
-    };
+    if (raiz == NULL) return novoNo;
 
-    printf("Digite a data de nascimento dessa pessoa: \n Ex: xx/xx/xxxx \n")
+    PONT atual = raiz;
+    while (atual->irmaoMaisNovo != NULL) atual = atual->irmaoMaisNovo;
+    atual->irmaoMaisNovo = novoNo;
+    novoNo->irmaoMaisVelho = atual;
+
+    return raiz; 
 }
 
+// Removendo pessoa 
+PONT removerPessoa(PONT raiz, char* nomeAlvo) {
+    if (raiz == NULL) return NULL;
 
+    // Se achou a pessoa
+    if (strcmp(nomeAlvo, raiz->nome) == 0) {
+        PONT temp = raiz->irmaoMaisNovo;
+        free(raiz);
+        return temp;
+    }
+    
+    // Se não achou
+    raiz->irmaoMaisNovo = removerPessoa(raiz->irmaoMaisNovo, nomeAlvo);
+    return raiz;
+}
 
 int main() {
-
+    PONT raiz;
+    inicializar(&raiz);
+    
+    raiz = inserirPessoa(raiz);
+    
+    printf("\nPessoa inserida: %s\n", raiz->nome);
+    
+    return 0;
 }
