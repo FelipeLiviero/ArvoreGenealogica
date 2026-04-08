@@ -3,9 +3,6 @@
 #include <string.h>
 #include "Funcoes.h"
 
-#include "Funcoes.h"
-
-
 static void lerLinha(char *buf, int tam)
 {
     if (fgets(buf, tam, stdin))
