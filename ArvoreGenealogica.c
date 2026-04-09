@@ -35,11 +35,11 @@ PONT criarNo(const char *nome, const char *mae,
     strncpy(novo->nomeSobrenome, nome, 99); novo->nomeSobrenome[99] = '\0';
     strncpy(novo->nomeMae,       mae,  99); novo->nomeMae[99]       = '\0';
     strncpy(novo->nomePai,       pai,  99); novo->nomePai[99]       = '\0';
-    novo->aniversario = niver;
-    novo->ptrPai      = NULL;
-    novo->ptrMae      = NULL;
-    novo->irmaoMaisNovo  = NULL;
-    novo->irmaoMaisVelho = NULL;
+    novo->aniversario  = niver;
+    novo->ptrPai       = NULL;
+    novo->ptrMae       = NULL;
+    novo->irmaoMaisNovo   = NULL;
+    novo->irmaoMaisVelho  = NULL;
     return novo;
 }
 
@@ -54,7 +54,7 @@ PONT inserirPessoa(PONT raiz)
     printf("  Data (dd/mm/aaaa): "); lerLinha(dataStr, 15);
 
     if (sscanf(dataStr, "%d/%d/%d", &niver.dia, &niver.mes, &niver.ano) != 3) {
-        printf("  Erro: formato de data invalido!\n");
+        printf("  Erro: formato de data invalido! Use dd/mm/aaaa.\n");
         return raiz;
     }
 
@@ -66,17 +66,18 @@ PONT inserirPessoa(PONT raiz)
     PONT novo = criarNo(nome, mae, pai, niver);
 
     if (raiz == NULL) {
-        return novo;
+        raiz = novo;
+    } else {
+        PONT atual = raiz;
+        while (atual->irmaoMaisNovo != NULL)
+            atual = atual->irmaoMaisNovo;
+        atual->irmaoMaisNovo = novo;
+        novo->irmaoMaisVelho = atual;
     }
-
-    PONT atual = raiz;
-    while (atual->irmaoMaisNovo != NULL)
-        atual = atual->irmaoMaisNovo;
-    atual->irmaoMaisNovo = novo;
-    novo->irmaoMaisVelho = atual;
 
     novo->ptrPai = buscarPessoa(raiz, pai);
     novo->ptrMae = buscarPessoa(raiz, mae);
+
     vincularFilhos(raiz, novo);
 
     printf("  '%s' inserido(a) com sucesso.\n", nome);
@@ -120,23 +121,73 @@ PONT removerPessoa(PONT raiz, const char *nomeAlvo)
 void imprimirNo(PONT p)
 {
     if (!p) return;
-    printf("  ┌─────────────────────────────────────────\n");
-    printf("  │ Nome      : %s\n",  p->nomeSobrenome);
-    printf("  │ Pai       : %s%s\n", p->nomePai[0] ? p->nomePai : "(nao informado)",
-                                     p->ptrPai ? " [na lista]" : "");
-    printf("  │ Mae       : %s%s\n", p->nomeMae[0] ? p->nomeMae : "(nao informado)",
-                                     p->ptrMae ? " [na lista]" : "");
-    printf("  │ Nascimento: %02d/%02d/%04d\n",
+    printf("  +------------------------------------------+\n");
+    printf("  | Nome      : %-28s |\n", p->nomeSobrenome);
+    printf("  | Pai       : %-28s |\n", p->nomePai[0] ? p->nomePai : "(nao informado)");
+    printf("  | Mae       : %-28s |\n", p->nomeMae[0] ? p->nomeMae : "(nao informada)");
+    printf("  | Nascimento: %02d/%02d/%04d                   |\n",
            p->aniversario.dia, p->aniversario.mes, p->aniversario.ano);
-    printf("  └─────────────────────────────────────────\n");
+    printf("  +------------------------------------------+\n");
 }
 
 void imprimirArvore(PONT raiz)
 {
-    printf("\n   LISTA COMPLETA \n");
     if (!raiz) { printf("  (vazia)\n\n"); return; }
-    for (PONT p = raiz; p != NULL; p = p->irmaoMaisNovo)
-        imprimirNo(p);
+
+    printf("\n  ======================================\n");
+    printf("         ARVORE GENEALOGICA\n");
+    printf("  ======================================\n");
+
+    for (PONT p = raiz; p != NULL; p = p->irmaoMaisNovo) {
+
+        printf("\n  [ %s ]\n", p->nomeSobrenome);
+        printf("  ----------------------------------------\n");
+
+        // Pai
+        if (p->ptrPai) {
+            printf("  |--[PAI]: %s\n", p->ptrPai->nomeSobrenome);
+            printf("  |   Nascimento: %02d/%02d/%04d\n",
+                   p->ptrPai->aniversario.dia,
+                   p->ptrPai->aniversario.mes,
+                   p->ptrPai->aniversario.ano);
+        } else if (p->nomePai[0]) {
+            printf("  |--[PAI]: %s (fora da lista)\n", p->nomePai);
+        } else {
+            printf("  |--[PAI]: nao informado\n");
+        }
+
+        // Mae
+        if (p->ptrMae) {
+            printf("  |--[MAE]: %s\n", p->ptrMae->nomeSobrenome);
+            printf("  |   Nascimento: %02d/%02d/%04d\n",
+                   p->ptrMae->aniversario.dia,
+                   p->ptrMae->aniversario.mes,
+                   p->ptrMae->aniversario.ano);
+        } else if (p->nomeMae[0]) {
+            printf("  |--[MAE]: %s (fora da lista)\n", p->nomeMae);
+        } else {
+            printf("  |--[MAE]: nao informada\n");
+        }
+
+        // Irmaos
+        int temIrmao = 0;
+        for (PONT q = raiz; q != NULL; q = q->irmaoMaisNovo) {
+            if (q == p) continue;
+            int mesmoPai = p->nomePai[0] && strcmp(p->nomePai, q->nomePai) == 0;
+            int mesmaMae = p->nomeMae[0] && strcmp(p->nomeMae, q->nomeMae) == 0;
+            if (mesmoPai || mesmaMae) {
+                if (!temIrmao) {
+                    printf("  |--[IRMAOS]:\n");
+                    temIrmao = 1;
+                }
+                printf("  |     - %s\n", q->nomeSobrenome);
+            }
+        }
+        if (!temIrmao)
+            printf("  |--[IRMAOS]: nenhum encontrado\n");
+
+        printf("  ----------------------------------------\n");
+    }
     printf("\n");
 }
 
@@ -145,7 +196,7 @@ void imprimirPai(PONT raiz, const char *nome)
     PONT p = buscarPessoa(raiz, nome);
     if (!p) { printf("  '%s' nao encontrado(a).\n", nome); return; }
 
-    printf("\n  ═══ PAI de %s ═══\n", nome);
+    printf("\n  === PAI de %s ===\n", nome);
     if (p->ptrPai)
         imprimirNo(p->ptrPai);
     else if (p->nomePai[0])
@@ -159,7 +210,7 @@ void imprimirMae(PONT raiz, const char *nome)
     PONT p = buscarPessoa(raiz, nome);
     if (!p) { printf("  '%s' nao encontrado(a).\n", nome); return; }
 
-    printf("\n  ═══ MAE de %s ═══\n", nome);
+    printf("\n  === MAE de %s ===\n", nome);
     if (p->ptrMae)
         imprimirNo(p->ptrMae);
     else if (p->nomeMae[0])
@@ -173,7 +224,7 @@ void imprimirIrmaos(PONT raiz, const char *nome)
     PONT p = buscarPessoa(raiz, nome);
     if (!p) { printf("  '%s' nao encontrado(a).\n", nome); return; }
 
-    printf("\n  ═══ IRMAOS de %s ═══\n", nome);
+    printf("\n  === IRMAOS de %s ===\n", nome);
 
     int achou = 0;
     for (PONT q = raiz; q != NULL; q = q->irmaoMaisNovo) {
@@ -205,7 +256,9 @@ int main(void)
     int opcao;
     char nome[100];
 
-    printf("     ARVORE GENEALOGICA\n");
+    printf("  ======================================\n");
+    printf("         ARVORE GENEALOGICA\n");
+    printf("  ======================================\n");
 
     do {
         printf("\n  1. Inserir pessoa\n");
@@ -222,37 +275,48 @@ int main(void)
 
         switch (opcao) {
             case 1:
+                printf("\n  --- Inserir ---\n");
                 raiz = inserirPessoa(raiz);
                 break;
+
             case 2:
+                printf("\n  --- Remover ---\n");
                 printf("  Nome a remover: "); lerLinha(nome, 100);
                 raiz = removerPessoa(raiz, nome);
                 break;
+
             case 3: {
+                printf("\n  --- Buscar ---\n");
                 printf("  Nome a buscar: "); lerLinha(nome, 100);
                 PONT res = buscarPessoa(raiz, nome);
                 if (res) imprimirNo(res);
                 else printf("  '%s' nao encontrado(a).\n", nome);
                 break;
             }
+
             case 4:
                 imprimirArvore(raiz);
                 break;
+
             case 5:
                 printf("  Nome da pessoa: "); lerLinha(nome, 100);
                 imprimirPai(raiz, nome);
                 break;
+
             case 6:
                 printf("  Nome da pessoa: "); lerLinha(nome, 100);
                 imprimirMae(raiz, nome);
                 break;
+
             case 7:
                 printf("  Nome da pessoa: "); lerLinha(nome, 100);
                 imprimirIrmaos(raiz, nome);
                 break;
+
             case 0:
                 printf("  Encerrando...\n");
                 break;
+
             default:
                 printf("  Opcao invalida.\n");
         }
