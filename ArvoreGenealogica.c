@@ -25,7 +25,7 @@ void inicializar(PONT *raiz)
 }
 
 PONT criarNo(const char *nome, const char *mae,
-             const char *pai,  ANIVERSARIO niver)
+             const char *pai, ANIVERSARIO niver)
 {
     PONT novo = (PONT)malloc(sizeof(NO));
     if (!novo) {
@@ -35,11 +35,11 @@ PONT criarNo(const char *nome, const char *mae,
     strncpy(novo->nomeSobrenome, nome, 99); novo->nomeSobrenome[99] = '\0';
     strncpy(novo->nomeMae,       mae,  99); novo->nomeMae[99]       = '\0';
     strncpy(novo->nomePai,       pai,  99); novo->nomePai[99]       = '\0';
-    novo->aniversario  = niver;
-    novo->ptrPai       = NULL;
-    novo->ptrMae       = NULL;
-    novo->irmaoMaisNovo   = NULL;
-    novo->irmaoMaisVelho  = NULL;
+    novo->aniversario = niver;
+    novo->ptrPai      = NULL;
+    novo->ptrMae      = NULL;
+    novo->irmaoMaisNovo  = NULL;
+    novo->irmaoMaisVelho = NULL;
     return novo;
 }
 
@@ -54,7 +54,7 @@ PONT inserirPessoa(PONT raiz)
     printf("  Data (dd/mm/aaaa): "); lerLinha(dataStr, 15);
 
     if (sscanf(dataStr, "%d/%d/%d", &niver.dia, &niver.mes, &niver.ano) != 3) {
-        printf("  Erro: formato de data invalido! Use dd/mm/aaaa.\n");
+        printf("  Erro: formato de data invalido!\n");
         return raiz;
     }
 
@@ -66,18 +66,17 @@ PONT inserirPessoa(PONT raiz)
     PONT novo = criarNo(nome, mae, pai, niver);
 
     if (raiz == NULL) {
-        raiz = novo;
-    } else {
-        PONT atual = raiz;
-        while (atual->irmaoMaisNovo != NULL)
-            atual = atual->irmaoMaisNovo;
-        atual->irmaoMaisNovo = novo;
-        novo->irmaoMaisVelho = atual;
+        return novo;
     }
+
+    PONT atual = raiz;
+    while (atual->irmaoMaisNovo != NULL)
+        atual = atual->irmaoMaisNovo;
+    atual->irmaoMaisNovo = novo;
+    novo->irmaoMaisVelho = atual;
 
     novo->ptrPai = buscarPessoa(raiz, pai);
     novo->ptrMae = buscarPessoa(raiz, mae);
-
     vincularFilhos(raiz, novo);
 
     printf("  '%s' inserido(a) com sucesso.\n", nome);
@@ -189,6 +188,15 @@ void imprimirIrmaos(PONT raiz, const char *nome)
     if (!achou) printf("  Nenhum irmao encontrado na lista.\n");
 }
 
+void liberarArvore(PONT raiz)
+{
+    while (raiz != NULL) {
+        PONT prox = raiz->irmaoMaisNovo;
+        free(raiz);
+        raiz = prox;
+    }
+}
+
 int main(void)
 {
     PONT raiz;
@@ -197,7 +205,7 @@ int main(void)
     int opcao;
     char nome[100];
 
-    printf("     ARVORE GENEALOGICA           \n");
+    printf("     ARVORE GENEALOGICA\n");
 
     do {
         printf("\n  1. Inserir pessoa\n");
@@ -210,51 +218,41 @@ int main(void)
         printf("  0. Sair\n");
         printf("  Opcao: ");
         scanf("%d", &opcao);
-        getchar(); /* consome '\n' deixado pelo scanf */
+        getchar();
 
         switch (opcao) {
             case 1:
-                printf("\n Inserir \n");
                 raiz = inserirPessoa(raiz);
                 break;
-
             case 2:
-                printf("\n Remover \n");
                 printf("  Nome a remover: "); lerLinha(nome, 100);
                 raiz = removerPessoa(raiz, nome);
                 break;
-
-            case 3:
-                printf("\n Buscar \n");
+            case 3: {
                 printf("  Nome a buscar: "); lerLinha(nome, 100);
                 PONT res = buscarPessoa(raiz, nome);
                 if (res) imprimirNo(res);
                 else printf("  '%s' nao encontrado(a).\n", nome);
                 break;
-
+            }
             case 4:
                 imprimirArvore(raiz);
                 break;
-
             case 5:
                 printf("  Nome da pessoa: "); lerLinha(nome, 100);
                 imprimirPai(raiz, nome);
                 break;
-
             case 6:
                 printf("  Nome da pessoa: "); lerLinha(nome, 100);
                 imprimirMae(raiz, nome);
                 break;
-
             case 7:
                 printf("  Nome da pessoa: "); lerLinha(nome, 100);
                 imprimirIrmaos(raiz, nome);
                 break;
-
             case 0:
                 printf("  Encerrando...\n");
                 break;
-
             default:
                 printf("  Opcao invalida.\n");
         }
